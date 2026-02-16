@@ -22,15 +22,6 @@ using Printf
 # ╔═╡ f5572450-fa47-4e91-a72d-22307997a6e3
 include("./integration_methods.jl");
 
-# ╔═╡ 32bbc279-f94a-4d80-8fcd-6274f3a80670
-num_iter = 1000
-
-# ╔═╡ 96e6df17-a07d-4d47-ab40-313341008755
-num_iter_2 = 4000
-
-# ╔═╡ e5d1e415-90b0-473d-9e42-d629287a51f7
-num_plotpoints = 1000
-
 # ╔═╡ 5ceac8f7-0a74-4f24-a238-78bdb1b5e8a3
 R = 5
 
@@ -49,49 +40,55 @@ Q = 1.602e-19
 # ╔═╡ 5b872744-8474-4a64-9eea-b4dc6a70b168
 h = 0.25
 
-# ╔═╡ df44c79d-222a-4527-9f98-3e6261588938
-use_implicit = true
+# ╔═╡ 1e2d0f11-a1b1-4e32-8af8-d14bdcd0d59d
+num_iter = 1000000
 
-# ╔═╡ 8be187be-aa5d-476c-a065-120c081e96ba
-num_FPI_iters = 3
+# ╔═╡ c07b7c24-a5af-4c6a-9397-4ecfd4c49b4a
+num_plotpoints = 500
 
 # ╔═╡ 68fc61b7-d6b5-494f-9773-450fced62908
-constants = Constants(R, a, B0, m, Q)
+constants = Constants(R, a, B0, m, Q);
 
 # ╔═╡ b1dde042-b6b0-4e56-ae6e-d944ab29b515
-initial_conditions = InitialConditions([6., 0., 0.5], [1e-25, 1e-25, 0.])
+initial_conditions = InitialConditions([6., 0., 0.5], [1e-25, 1e-25, 0.]);
 
-# ╔═╡ c5485524-8f45-4b11-95cb-3e7ebba30c34
-begin
-xs_plot, ys_plot, zs_plot = integrate(constants, initial_conditions, h, num_iter, num_plotpoints, use_implicit, num_FPI_iters);
-nothing
-end
-
-# ╔═╡ 13bc17b1-c0fd-40e5-be8b-b3c8f20dbd10
-xs_plot_2, ys_plot_2, zs_plot_2 = integrate(constants, initial_conditions, h, num_iter_2, num_plotpoints, use_implicit, num_FPI_iters)
-
-# ╔═╡ 8f0c17ef-2853-449c-a996-c3be8c5eee35
+# ╔═╡ 3b44f89c-c692-40fb-8dd2-d4ffdec70971
 CairoMakie.activate!()
 
-# ╔═╡ 65bcfd91-1e9d-49b6-9625-778795bd2999
-begin
-	fig = Figure(fontsize=20, size=(750,400));
-	ax1 = Axis3(fig[1,1], azimuth=2.7*pi/4, elevation=pi/6)
-	ax2 = Axis3(fig[1,2], azimuth=2.7*pi/4, elevation=pi/6)
-	lines!(ax1, xs_plot, ys_plot, zs_plot, color="darkblue")
-	lines!(ax2, xs_plot_2, ys_plot_2, zs_plot_2, color="darkblue")
-	for ax in [ax1, ax2]
-		limits!(ax, -10, 10, -10, 10, -10, 10)
-		ax.xlabel = "x [m]"
-		ax.ylabel = "y [m]"
-		ax.zlabel = "z [m]"
-	end
+# ╔═╡ eb3c2e92-a2b5-4188-9d8d-6c7af9c6c9f2
+convertToGeV = (E -> E / (1.602e-19 * 1e9))
 
-	ax1.title = "Total integration time = " * string( round(Float64(h*constants.T_DIM*num_iter*1e9), digits=1) ) * " ns"
-	ax2.title = "Total integration time = " * string( round(Float64(h*constants.T_DIM*num_iter_2*1e9), digits=1) ) * " ns"
-	fig[0,:] = Label(fig, "Symplectic Euler, Charged particle in tokamak field", fontsize=24)
+# ╔═╡ 82dc904a-d433-43b0-aea0-37bc078aa2d5
+Hs_quasiexplicit = map(convertToGeV, integrateReturnHamiltonian(constants, initial_conditions, h, num_iter, num_plotpoints, false) );
+
+# ╔═╡ 3cb15991-77f4-4e34-b82a-31f24ab1401f
+Hs_implicit_2 = map(convertToGeV, integrateReturnHamiltonian(constants, initial_conditions, h, num_iter, num_plotpoints, true, 2) );
+
+# ╔═╡ d6a6240e-c0e5-4cea-bee2-5e22d13aa68d
+Hs_implicit_3 = map(convertToGeV, integrateReturnHamiltonian(constants, initial_conditions, h, num_iter, num_plotpoints, true, 3) );
+
+# ╔═╡ 323a80ed-a435-4ada-a41a-dfae08a30636
+t_step = div(num_iter, length(Hs_quasiexplicit))
+
+# ╔═╡ 56fea056-e663-45c8-ae27-c27a969aa208
+ts = map(n_ -> h*(n_ - 1), 1:num_plotpoints)
+
+# ╔═╡ e69d6bff-779d-4f49-8d09-1f0258a7df99
+begin
+	fig = Figure(fontsize=12, size=(500,400))
+	ax = Axis(fig[1:2,1:3])
+
+	lines_expl = lines!(ax, ts, Hs_quasiexplicit, color="darkblue")
+	lines_3 = lines!(ax, ts, Hs_implicit_3, color="firebrick")
+	lines_2 = lines!(ax, ts, Hs_implicit_2, color="mediumorchid4")
+
+	ax.xlabel = L"$t$ [$T_0$]"
+	ax.ylabel = L"$H$ [GeV]"
+
+	Legend(fig[3,2], [lines_expl, lines_2, lines_3], [L"$p$-implicit (linearly)", L"$q$-implicit with 2 FPI steps", L"$q$-implicit with 3 FPI steps"])
+	ax.title = "Energy drift for both Symplectic Euler schemes"
 	fig
-	#save("trajectory.pdf", fig)
+	#save("energy_drift.pdf", fig)
 end
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
@@ -1594,22 +1591,23 @@ version = "3.6.0+0"
 # ╠═44c40671-9596-410e-a315-b8ba317bb3d8
 # ╠═c3c97228-be72-40b9-a3dc-af8055bafb97
 # ╠═f5572450-fa47-4e91-a72d-22307997a6e3
-# ╠═32bbc279-f94a-4d80-8fcd-6274f3a80670
-# ╠═96e6df17-a07d-4d47-ab40-313341008755
-# ╠═e5d1e415-90b0-473d-9e42-d629287a51f7
 # ╠═5ceac8f7-0a74-4f24-a238-78bdb1b5e8a3
 # ╠═b58d451f-cd91-479a-b743-b3fca3da202e
 # ╠═ed03bab4-582d-490e-b957-2cad4abf081e
 # ╠═e3f25cc5-2f5d-4b4e-89ea-63090026da90
 # ╠═bac5585a-7003-4343-ad24-cd40566548f2
 # ╠═5b872744-8474-4a64-9eea-b4dc6a70b168
-# ╠═df44c79d-222a-4527-9f98-3e6261588938
-# ╠═8be187be-aa5d-476c-a065-120c081e96ba
+# ╠═1e2d0f11-a1b1-4e32-8af8-d14bdcd0d59d
+# ╠═c07b7c24-a5af-4c6a-9397-4ecfd4c49b4a
 # ╠═68fc61b7-d6b5-494f-9773-450fced62908
 # ╠═b1dde042-b6b0-4e56-ae6e-d944ab29b515
-# ╠═c5485524-8f45-4b11-95cb-3e7ebba30c34
-# ╠═13bc17b1-c0fd-40e5-be8b-b3c8f20dbd10
-# ╠═8f0c17ef-2853-449c-a996-c3be8c5eee35
-# ╠═65bcfd91-1e9d-49b6-9625-778795bd2999
+# ╠═3b44f89c-c692-40fb-8dd2-d4ffdec70971
+# ╠═82dc904a-d433-43b0-aea0-37bc078aa2d5
+# ╠═3cb15991-77f4-4e34-b82a-31f24ab1401f
+# ╠═d6a6240e-c0e5-4cea-bee2-5e22d13aa68d
+# ╠═eb3c2e92-a2b5-4188-9d8d-6c7af9c6c9f2
+# ╠═323a80ed-a435-4ada-a41a-dfae08a30636
+# ╠═56fea056-e663-45c8-ae27-c27a969aa208
+# ╠═e69d6bff-779d-4f49-8d09-1f0258a7df99
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
