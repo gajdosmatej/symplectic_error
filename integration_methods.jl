@@ -1,0 +1,107 @@
+using ProgressLogging
+include("./physics_calculations.jl")
+
+
+function stepQuasiexplicit!(position, momentum, h, constants)
+	x, y, z = position
+	A_point, DA_T_point = getAAndDA_T(x, y, z, constants)
+
+	momentum .= (I - h*DA_T_point) \ (momentum - h*DA_T_point*A_point)
+	position .= position + h*(momentum - A_point)
+end
+
+
+function stepImplicit!(position, momentum, h, constants, num_FPI)
+	temp_pos = position
+	for i=1:num_FPI
+		x_dim, y_dim, z_dim = constants.L_DIM * temp_pos
+		rho = getRho(x_dim, y_dim)
+		r = getR(rho, z_dim, constants)
+		F = getF(r, constants)
+		A_temp = getA(rho, F, x_dim, y_dim, constants)
+
+		temp_pos = position + h*(momentum - A_temp)
+	end
+	position .= temp_pos
+	
+	x, y, z = position
+	A, DA_T = getAAndDA_T(x, y, z, constants)
+	momentum .= momentum + h*DA_T*(momentum - A)
+end
+
+
+function integrate(constants, initial_conditions, h, num_iter, num_plotpoints=1000, use_implicit=false, FPI_iters=1)
+	modus = div(num_iter, num_plotpoints)
+	
+	step_method! = stepQuasiexplicit!
+
+	if use_implicit
+		step_method! = (position_, momentum_, h_, constants_) -> stepImplicit!(position_, momentum_, h_, constants_, FPI_iters)	# currying stepImplicit(., FPI_iters)
+	end
+
+	xs_plot, ys_plot, zs_plot = zeros(num_plotpoints), zeros(num_plotpoints), zeros(num_plotpoints)
+	position = 1/constants.L_DIM * initial_conditions.q0
+	momentum = 1/constants.P_DIM * initial_conditions.p0
+	@progress for i=1:num_iter
+		if mod(i-1, modus) == 0
+			k = div(i-1, modus) + 1
+			xs_plot[k], ys_plot[k], zs_plot[k] = constants.L_DIM * position
+		end
+
+		step_method!(position, momentum, h, constants)
+	end
+	return xs_plot, ys_plot, zs_plot
+end
+
+
+function integrateReturnHamiltonian(constants, initial_conditions, h, num_iter, num_plotpoints=1000, use_implicit=false, FPI_iters=1)
+	modus = div(num_iter, num_plotpoints)
+	
+	step_method! = stepQuasiexplicit!
+
+	if use_implicit
+		step_method! = (position_, momentum_, h_, constants_) -> stepImplicit!(position_, momentum_, h_, constants_, FPI_iters)	# currying stepImplicit(., FPI_iters)
+	end
+
+	Hs_plot = zeros(num_plotpoints)
+	position = 1/constants.L_DIM * initial_conditions.q0
+	momentum = 1/constants.P_DIM * initial_conditions.p0
+	@progress for i=1:num_iter
+		if mod(i-1, modus) == 0
+			k = div(i-1, modus) + 1
+			Hs_plot[k] = getH(position, momentum, constants)
+		end
+
+		step_method!(position, momentum, h, constants)
+	end
+	return Hs_plot
+end
+
+
+function implicitFlow(position, momentum, constants, h, FPI_iters)
+	position_new = position
+	for i=1:FPI_iters
+		position_new = position + h*getHp(position_new, momentum, constants)
+	end
+	momentum_new = momentum - h*getHq(position_new, momentum, constants)
+	return [position_new; momentum_new]
+end
+
+
+function getFlowDifferential(position, momentum, constants, h, FPI_iters)
+	flow_as_state_func = ( state_ -> implicitFlow(state_[1:3], state_[4:6], constants, h, FPI_iters) )
+	return ForwardDiff.jacobian(flow_as_state_func, [position; momentum])
+end
+
+
+function getPerturbedMatrix(position, momentum, constants, h, FPI_iters)
+	J = [	0 0 0 1 0 0; 
+				0 0 0 0 1 0;
+				0 0 0 0 0 1;
+				-1 0 0 0 0 0;
+				0 -1 0 0 0 0;
+				0 0 -1 0 0 0
+			]
+	DPhi = getFlowDifferential(position, momentum, constants, h, FPI_iters)
+	return transpose(DPhi) * J * DPhi
+end

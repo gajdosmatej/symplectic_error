@@ -1,0 +1,69 @@
+using LinearAlgebra
+using ForwardDiff
+include("./structs.jl")
+
+
+function getRho(x_dim, y_dim)
+	return sqrt(x_dim^2 + y_dim^2)
+end
+
+
+function getR(rho, z_dim, constants)
+	return sqrt(z_dim^2 + (rho - constants.R)^2)
+end
+
+
+function getF(r, constants)
+	a, R = constants.a, constants.R
+	return 1/R * (1/(3a) * r^3 − 1/(2a^2) * r^2 + (1+a^2)/a^3 * r − (1 + a^2)/a^4 * log(a*r + 1))
+end
+
+
+function getA(rho, F, x_dim, y_dim, constants)
+	B0, R = constants.B0, constants.R
+	Ax_dim = B0*F/rho * (-y_dim/rho)
+	Ay_dim = B0*F/rho * (x_dim/rho)
+	Az_dim = -B0*R*log(rho/R)
+	return 1/constants.A_DIM * [Ax_dim, Ay_dim, Az_dim]
+end
+
+
+function getA(pos, constants)
+	x_dim, y_dim, z_dim = constants.L_DIM * pos
+	rho = getRho(x_dim, y_dim)
+	r = getR(rho, z_dim, constants)
+	F = getF(r, constants)
+	return getA(rho, F, x_dim, y_dim, constants)
+end
+
+
+function getAAndDA_T(x, y, z, constants)
+	A_as_position_function = ( pos -> getA(pos, constants) )
+
+	A = A_as_position_function([x, y, z])
+	DA = ForwardDiff.jacobian(A_as_position_function, [x, y, z])
+	return [A, transpose(DA)]
+end
+
+
+function getH(position, momentum, constants)
+	x_dim, y_dim, z_dim = constants.L_DIM * position
+	rho = getRho(x_dim, y_dim)
+	r = getR(rho, z_dim, constants)
+	F = getF(r, constants)
+	A = getA(rho, F, x_dim, y_dim, constants)
+	H = 1/2 * norm(momentum - A)^2
+	return H * constants.H_DIM
+end
+
+
+function getHq(position, momentum, constants)
+	H_as_position_func = (q_ -> getH(q_, momentum, constants))
+	return ForwardDiff.gradient(H_as_position_func, position)
+end
+
+
+function getHp(position, momentum, constants)
+	H_as_momentum_func = (p_ -> getH(position, p_, constants))
+	return ForwardDiff.gradient(H_as_momentum_func, momentum)
+end
