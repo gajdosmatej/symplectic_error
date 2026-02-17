@@ -19,6 +19,9 @@ function getF(r, constants)
 end
 
 
+"""
+Calculate the vector potential from the rho, x, y and F values.
+"""
 function getA(rho, F, x_dim, y_dim, constants)
 	B0, R = constants.B0, constants.R
 	Ax_dim = B0*F/rho * (-y_dim/rho)
@@ -28,6 +31,9 @@ function getA(rho, F, x_dim, y_dim, constants)
 end
 
 
+"""
+Overload of getA calculation the vector potential just from position of the particle.
+"""
 function getA(pos, constants)
 	x_dim, y_dim, z_dim = constants.L_DIM * pos
 	rho = getRho(x_dim, y_dim)
@@ -37,6 +43,9 @@ function getA(pos, constants)
 end
 
 
+"""
+Calculate vector potential in a given position, together with its transposed Jacobi matrix.
+"""
 function getAAndDA_T(x, y, z, constants)
 	A_as_position_function = ( pos -> getA(pos, constants) )
 
@@ -46,6 +55,9 @@ function getAAndDA_T(x, y, z, constants)
 end
 
 
+"""
+Get the Hamiltonian value for the current particle state.
+"""
 function getH(position, momentum, constants)
 	x_dim, y_dim, z_dim = constants.L_DIM * position
 	rho = getRho(x_dim, y_dim)
@@ -57,12 +69,18 @@ function getH(position, momentum, constants)
 end
 
 
+"""
+Get the position gradient of the Hamiltonian.
+"""
 function getHq(position, momentum, constants)
 	H_as_position_func = (q_ -> getH(q_, momentum, constants))
 	return ForwardDiff.gradient(H_as_position_func, position)
 end
 
 
+"""
+Get the momentum gradient of the Hamiltonian.
+"""
 function getHp(position, momentum, constants)
 	H_as_momentum_func = (p_ -> getH(position, p_, constants))
 	return ForwardDiff.gradient(H_as_momentum_func, momentum)

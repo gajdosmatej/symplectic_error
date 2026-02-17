@@ -2,6 +2,9 @@ using ProgressLogging
 include("./physics_calculations.jl")
 
 
+"""
+Step the current position and momentum state using the p-implicit Symplectic Euler method (which is in this case just a linear system).
+"""
 function stepQuasiexplicit!(position, momentum, h, constants)
 	x, y, z = position
 	A_point, DA_T_point = getAAndDA_T(x, y, z, constants)
@@ -11,6 +14,9 @@ function stepQuasiexplicit!(position, momentum, h, constants)
 end
 
 
+"""
+Step the current position and momentum state using the q-implicit Symplectic Euler method. Use num_FPI fixed point iterations.
+"""
 function stepImplicit!(position, momentum, h, constants, num_FPI)
 	temp_pos = position
 	for i=1:num_FPI
@@ -30,6 +36,11 @@ function stepImplicit!(position, momentum, h, constants, num_FPI)
 end
 
 
+"""
+Integrate the Hamiltonian system with given initial conditions with either p-implicit or q-implicit Symplectic Euler method,
+based on the use_implicit value. Return arrays (xs[num_plotpoints], ys[num_plotpoints], zs[num_plotpoints]) 
+of the integrated positions (on a coarser mesh defined by the num_plotpoints argument).
+"""
 function integrate(constants, initial_conditions, h, num_iter, num_plotpoints=1000, use_implicit=false, FPI_iters=1)
 	modus = div(num_iter, num_plotpoints)
 	
@@ -54,6 +65,11 @@ function integrate(constants, initial_conditions, h, num_iter, num_plotpoints=10
 end
 
 
+"""
+Integrate the Hamiltonian system with given initial conditions with either p-implicit or q-implicit Symplectic Euler method,
+based on the use_implicit value. Return array Hs[num_plotpoints] 
+of the Hamiltonian values along integration (on a coarser mesh defined by the num_plotpoints argument).
+"""
 function integrateReturnHamiltonian(constants, initial_conditions, h, num_iter, num_plotpoints=1000, use_implicit=false, FPI_iters=1)
 	modus = div(num_iter, num_plotpoints)
 	
@@ -78,6 +94,9 @@ function integrateReturnHamiltonian(constants, initial_conditions, h, num_iter, 
 end
 
 
+"""
+Return new position and momenta values using the q-implicit Symplectic Euler method with FPI_iters fixed point iterations.
+"""
 function implicitFlow(position, momentum, constants, h, FPI_iters)
 	position_new = position
 	for i=1:FPI_iters
@@ -88,12 +107,20 @@ function implicitFlow(position, momentum, constants, h, FPI_iters)
 end
 
 
+"""
+Return the Jacobi matrix of the flow given by one step of the q-implicit Symplectic Euler method 
+with FPI_iters fixed point iterations.
+"""
 function getFlowDifferential(position, momentum, constants, h, FPI_iters)
 	flow_as_state_func = ( state_ -> implicitFlow(state_[1:3], state_[4:6], constants, h, FPI_iters) )
 	return ForwardDiff.jacobian(flow_as_state_func, [position; momentum])
 end
 
 
+"""
+Get the perturbation of the symplectic structure matrix J after applying one step of the q-implicit Symplectic Euler method
+with FPI_iters fixed point iterations.
+"""
 function getPerturbedMatrix(position, momentum, constants, h, FPI_iters)
 	J = [	0 0 0 1 0 0; 
 				0 0 0 0 1 0;

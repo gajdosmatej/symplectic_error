@@ -11,6 +11,7 @@ struct Constants
 	A_DIM
 
 	function Constants(R, a, B0, m, Q)
+		# Define characteristic dimensions
 		L_DIM = 2*pi*R	# one toroidal cycle
 		T_DIM = m/(Q*B0) # set the maximal gyrofrequency to 1 
 		P_DIM = m*L_DIM / T_DIM
