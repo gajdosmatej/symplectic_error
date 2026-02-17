@@ -47,10 +47,10 @@ m = 1.673e-27;
 Q = 1.602e-19;
 
 # ╔═╡ 13dba0bc-9e10-47f9-8fb8-e0b4866ca175
-init_pos = [6., 0., 0.5]
+init_pos = [6., 0., 0.5];
 
 # ╔═╡ f3fdafe6-6d7a-4a54-aa99-011cbec4e090
-init_momentum = [1e-25, 1e-25, 0.]
+init_momentum = [1e-25, 1e-25, 0.];
 
 # ╔═╡ 68fc61b7-d6b5-494f-9773-450fced62908
 constants = Constants(
@@ -162,10 +162,10 @@ function getOrderPlot(is_diag)
 	ax.xlabel = L"$h$ [$T_0$]"
 	if is_diag
 		ax.ylabel = L"\Vert D \Vert_F"
-		ax.title = L"Spectral norm of the diagonal block in $\tilde{J}$ for different step sizes $h$"
+		ax.title = L"Frobenius norm of the diagonal block in $\tilde{J}$ for different step sizes $h$"
 	else
 		ax.ylabel = L"\Vert A - I \Vert_F"
-		ax.title = L"Spectral norm of the antidiagonal perturbation in $\tilde{J}$ for different step sizes $h$"
+		ax.title = L"Frobenius norm of the antidiagonal perturbation in $\tilde{J}$ for different step sizes $h$"
 	end
 	Legend(fig[1,2], scatters, [L"$M = 1$", L"$M = 2$", L"$M = 3$"])
 
