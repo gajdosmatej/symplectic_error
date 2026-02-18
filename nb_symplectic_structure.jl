@@ -22,15 +22,6 @@ using Printf
 # ╔═╡ f5572450-fa47-4e91-a72d-22307997a6e3
 include("./integration_methods.jl");
 
-# ╔═╡ a342b8cc-68dd-44e4-96e0-6b1b6d9491c3
-precision = 256
-
-# ╔═╡ aec02921-9e7f-4be7-b20c-8f3e06622035
-begin
-	setprecision(BigFloat, precision);
-	increasePrecision(x) = BigFloat(x);
-end;
-
 # ╔═╡ 5ceac8f7-0a74-4f24-a238-78bdb1b5e8a3
 R = 5;
 
@@ -53,19 +44,10 @@ init_pos = [6., 0., 0.5];
 init_momentum = [1e-25, 1e-25, 0.];
 
 # ╔═╡ 68fc61b7-d6b5-494f-9773-450fced62908
-constants = Constants(
-	increasePrecision(R), 
-	increasePrecision(a), 
-	increasePrecision(B0), 
-	increasePrecision(m), 
-	increasePrecision(Q)
-);
+constants = Constants(R, a, B0, m, Q)
 
 # ╔═╡ b1dde042-b6b0-4e56-ae6e-d944ab29b515
-initial_conditions = InitialConditions(
-	increasePrecision.(init_pos),
-	increasePrecision.(init_momentum)
-);
+initial_conditions = InitialConditions(init_pos, init_momentum);
 
 # ╔═╡ 8f0c17ef-2853-449c-a996-c3be8c5eee35
 CairoMakie.activate!();
@@ -79,6 +61,12 @@ J = [	0 0 0 1 0 0;
 			0 0 -1 0 0 0
 		];
 
+# ╔═╡ 1c231e80-8779-4010-bc7a-0f005c809e18
+pos = 1/constants.L_DIM * initial_conditions.q0
+
+# ╔═╡ 16db40a0-2f07-49ce-9bdf-3935f01ec8b0
+momentum = 1/constants.P_DIM * initial_conditions.p0
+
 # ╔═╡ edcc339a-d2f1-4a7f-b7c0-2c9d1f54cf34
 begin
 	num_FPI_iters = 3;
@@ -86,8 +74,7 @@ begin
 		h_val = 10.0^(-i)
 		println("h = 1e-", i, " * T_0")
 
-		DPhi = getFlowDifferential(initial_conditions.q0, initial_conditions.p0, constants, h_val, num_FPI_iters)
-		J_perturbed = transpose(DPhi) * J * DPhi
+		J_perturbed = getPerturbedMatrix(pos, momentum, constants, h_val, num_FPI_iters)
 		J_diagonal = J_perturbed[4:6,4:6]
 		J_antidiagonal_delta = J_perturbed[1:3,4:6] - Matrix(1.0I, 3, 3)
 
@@ -108,9 +95,6 @@ function getOrderPlot(is_diag)
 	fig = Figure(fontsize=20, size=(750,400))
 	ax = Axis(fig[1,1], xscale=log10, yscale=log10, xgridvisible=false, ygridvisible=false)
 
-	pos = 1/constants.L_DIM * initial_conditions.q0
-	momentum = 1/constants.P_DIM * initial_conditions.p0
-
 	for FPI_iters = 1:3
 		println("# FPI = ", FPI_iters)
 		norms = []
@@ -118,7 +102,7 @@ function getOrderPlot(is_diag)
 		A = []
 		b = []
 
-		hs = 10 .^(-0.25:-0.25:-3.25)
+		hs = 10 .^(-0.25:-0.25:-3.5)
 		@progress for h=hs
 
 			J_perturbed = getPerturbedMatrix(pos, momentum, constants, h, FPI_iters)
@@ -153,7 +137,7 @@ function getOrderPlot(is_diag)
 		@printf("%.3e", C)
 		println("")
 
-		x_vals = 10 .^(-0.1:-0.01:-3.4)
+		x_vals = 10 .^(-0.1:-0.01:-3.7)
 		y_vals = C*(x_vals .^p)
 		push!(lines_objs, lines!(x_vals, y_vals, color=color, linestyle=:dash, linewidth=2))
 		push!(slopes, p)
@@ -176,14 +160,14 @@ end;
 begin
 	fig_diag = getOrderPlot(true)
 	fig_diag
-	#save("discrepancy_structure_diagonal.pdf", fig)
+	#save("discrepancy_structure_diagonal.pdf", fig_diag)
 end
 
 # ╔═╡ 4ce6f0eb-205a-4832-a77b-8b8cf48394ba
 begin
 	fig_antidiag = getOrderPlot(false)
 	fig_antidiag
-	#save("discrepancy_structure_antidiagonal.pdf", fig)
+	#save("discrepancy_structure_antidiagonal.pdf", fig_antidiag)
 end
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
@@ -1780,8 +1764,6 @@ version = "4.1.0+0"
 # ╠═44c40671-9596-410e-a315-b8ba317bb3d8
 # ╠═c3c97228-be72-40b9-a3dc-af8055bafb97
 # ╠═f5572450-fa47-4e91-a72d-22307997a6e3
-# ╠═a342b8cc-68dd-44e4-96e0-6b1b6d9491c3
-# ╠═aec02921-9e7f-4be7-b20c-8f3e06622035
 # ╠═5ceac8f7-0a74-4f24-a238-78bdb1b5e8a3
 # ╠═b58d451f-cd91-479a-b743-b3fca3da202e
 # ╠═ed03bab4-582d-490e-b957-2cad4abf081e
@@ -1793,6 +1775,8 @@ version = "4.1.0+0"
 # ╠═b1dde042-b6b0-4e56-ae6e-d944ab29b515
 # ╠═8f0c17ef-2853-449c-a996-c3be8c5eee35
 # ╠═408e7b33-c89b-4117-955f-a136a65404f1
+# ╠═1c231e80-8779-4010-bc7a-0f005c809e18
+# ╠═16db40a0-2f07-49ce-9bdf-3935f01ec8b0
 # ╠═edcc339a-d2f1-4a7f-b7c0-2c9d1f54cf34
 # ╠═cb0a5e9b-454b-491e-b916-dd407fc37cde
 # ╠═453eac9e-596f-461c-8eb9-42f6889be69e
