@@ -47,7 +47,7 @@ num_iter = 1000000;
 num_plotpoints = 500;
 
 # ╔═╡ 68fc61b7-d6b5-494f-9773-450fced62908
-constants = Constants(R, a, B0, m, Q);
+constants = Constants(R, a, B0, m, Q)
 
 # ╔═╡ b1dde042-b6b0-4e56-ae6e-d944ab29b515
 initial_conditions = InitialConditions([6., 0., 0.5], [1e-25, 1e-25, 0.]);
