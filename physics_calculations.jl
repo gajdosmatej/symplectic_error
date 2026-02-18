@@ -20,7 +20,7 @@ end
 
 
 """
-Calculate the vector potential from the rho, x, y and F values.
+Calculate the dimensionless vector potential from the rho, x, y and F values.
 """
 function getA(rho, F, x_dim, y_dim, constants)
 	B0, R = constants.B0, constants.R
@@ -32,7 +32,7 @@ end
 
 
 """
-Overload of getA calculation the vector potential just from position of the particle.
+Overload of getA calculation of the dimensionless vector potential just from the dimensionless position of the particle.
 """
 function getA(pos, constants)
 	x_dim, y_dim, z_dim = constants.L_DIM * pos
@@ -44,7 +44,7 @@ end
 
 
 """
-Calculate vector potential in a given position, together with its transposed Jacobi matrix.
+Calculate dimensionless vector potential in a given dimensionless position, together with its transposed Jacobi matrix.
 """
 function getAAndDA_T(x, y, z, constants)
 	A_as_position_function = ( pos -> getA(pos, constants) )
@@ -56,7 +56,7 @@ end
 
 
 """
-Get the Hamiltonian value for the current particle state.
+Get the dimensionless Hamiltonian value for the current dimensionless particle state.
 """
 function getH(position, momentum, constants)
 	x_dim, y_dim, z_dim = constants.L_DIM * position
@@ -65,12 +65,12 @@ function getH(position, momentum, constants)
 	F = getF(r, constants)
 	A = getA(rho, F, x_dim, y_dim, constants)
 	H = 1/2 * norm(momentum - A)^2
-	return H * constants.H_DIM
+	return H
 end
 
 
 """
-Get the position gradient of the Hamiltonian.
+Get the dimensionless position gradient of the dimensionless Hamiltonian.
 """
 function getHq(position, momentum, constants)
 	H_as_position_func = (q_ -> getH(q_, momentum, constants))
@@ -79,7 +79,7 @@ end
 
 
 """
-Get the momentum gradient of the Hamiltonian.
+Get the dimensionless momentum gradient of the dimensionless Hamiltonian.
 """
 function getHp(position, momentum, constants)
 	H_as_momentum_func = (p_ -> getH(position, p_, constants))

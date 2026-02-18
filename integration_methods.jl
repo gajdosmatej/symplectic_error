@@ -85,7 +85,7 @@ function integrateReturnHamiltonian(constants, initial_conditions, h, num_iter, 
 	@progress for i=1:num_iter
 		if mod(i-1, modus) == 0
 			k = div(i-1, modus) + 1
-			Hs_plot[k] = getH(position, momentum, constants)
+			Hs_plot[k] = constants.H_DIM * getH(position, momentum, constants)
 		end
 
 		step_method!(position, momentum, h, constants)
