@@ -72,8 +72,8 @@ end
 Get the dimensionless position gradient of the dimensionless Hamiltonian.
 """
 function getHq(position, momentum, constants)
-	H_as_position_func = (q_ -> getH(q_, momentum, constants))
-	return ForwardDiff.gradient(H_as_position_func, position)
+	A, DA_T = getAAndDA_T(position, constants)
+	return -DA_T * (momentum - A)
 end
 
 
@@ -81,6 +81,5 @@ end
 Get the dimensionless momentum gradient of the dimensionless Hamiltonian.
 """
 function getHp(position, momentum, constants)
-	H_as_momentum_func = (p_ -> getH(position, p_, constants))
-	return ForwardDiff.gradient(H_as_momentum_func, momentum)
+	return momentum - getA(position, constants)
 end

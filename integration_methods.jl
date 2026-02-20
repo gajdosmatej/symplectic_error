@@ -10,7 +10,7 @@ function stepQuasiexplicit!(position, momentum, h, constants)
 	A_point, DA_T_point = getAAndDA_T(position, constants)
 
 	momentum .= (I - h*DA_T_point) \ (momentum - h*DA_T_point*A_point)
-	position .= position + h*(momentum - A_point)
+	position .= position + h*getHp(position, momentum, constants)
 end
 
 
@@ -21,13 +21,10 @@ Use num_FPI fixed point iterations.
 function stepImplicit!(position, momentum, h, constants, num_FPI)
 	temp_pos = position
 	for i=1:num_FPI
-		A_temp = getA(temp_pos, constants)
-		temp_pos = position + h*(momentum - A_temp)
+		temp_pos = position + h*getHp(temp_pos, momentum, constants)
 	end
 	position .= temp_pos
-	
-	A, DA_T = getAAndDA_T(position, constants)
-	momentum .= momentum + h*DA_T*(momentum - A)
+	momentum .= momentum - h*getHq(position, momentum, constants)
 end
 
 
