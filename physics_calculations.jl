@@ -37,8 +37,8 @@ end
 """
 Overload of getA calculation of the dimensionless vector potential just from the dimensionless position of the particle.
 """
-function getA(pos, constants)
-	x_dim, y_dim, z_dim = constants.L_DIM * pos
+function getA(position, constants)
+	x_dim, y_dim, z_dim = constants.L_DIM * position
 	rho = getRho(x_dim, y_dim)
 	r = getR(rho, z_dim, constants)
 	F = getF(r, constants)
@@ -49,11 +49,11 @@ end
 """
 Calculate dimensionless vector potential in a given dimensionless position, together with its transposed Jacobi matrix.
 """
-function getAAndDA_T(x, y, z, constants)
-	A_as_position_function = ( pos -> getA(pos, constants) )
+function getAAndDA_T(position, constants)
+	A_as_position_function = ( pos_ -> getA(pos_, constants) )
 
-	A = A_as_position_function([x, y, z])
-	DA = ForwardDiff.jacobian(A_as_position_function, [x, y, z])
+	A = A_as_position_function(position)
+	DA = ForwardDiff.jacobian(A_as_position_function, position)
 	return [A, transpose(DA)]
 end
 

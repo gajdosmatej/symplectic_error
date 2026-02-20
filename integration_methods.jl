@@ -3,11 +3,11 @@ include("./physics_calculations.jl")
 
 
 """
-Step the current position and momentum state using the p-implicit Symplectic Euler method (which is in this case just a linear system).
+Step the current position and momentum state using the p-implicit Symplectic Euler method 
+(which is in this case just a linear system).
 """
 function stepQuasiexplicit!(position, momentum, h, constants)
-	x, y, z = position
-	A_point, DA_T_point = getAAndDA_T(x, y, z, constants)
+	A_point, DA_T_point = getAAndDA_T(position, constants)
 
 	momentum .= (I - h*DA_T_point) \ (momentum - h*DA_T_point*A_point)
 	position .= position + h*(momentum - A_point)
@@ -15,23 +15,18 @@ end
 
 
 """
-Step the current position and momentum state using the q-implicit Symplectic Euler method. Use num_FPI fixed point iterations.
+Step the current position and momentum state using the q-implicit Symplectic Euler method. 
+Use num_FPI fixed point iterations.
 """
 function stepImplicit!(position, momentum, h, constants, num_FPI)
 	temp_pos = position
 	for i=1:num_FPI
-		x_dim, y_dim, z_dim = constants.L_DIM * temp_pos
-		rho = getRho(x_dim, y_dim)
-		r = getR(rho, z_dim, constants)
-		F = getF(r, constants)
-		A_temp = getA(rho, F, x_dim, y_dim, constants)
-
+		A_temp = getA(temp_pos, constants)
 		temp_pos = position + h*(momentum - A_temp)
 	end
 	position .= temp_pos
 	
-	x, y, z = position
-	A, DA_T = getAAndDA_T(x, y, z, constants)
+	A, DA_T = getAAndDA_T(position, constants)
 	momentum .= momentum + h*DA_T*(momentum - A)
 end
 
@@ -95,7 +90,7 @@ end
 
 
 """
-Return new position and momenta values using the q-implicit Symplectic Euler method with FPI_iters fixed point iterations.
+Return new dimensionless position and momenta values using the q-implicit Symplectic Euler method with FPI_iters fixed point iterations.
 """
 function implicitFlow(position, momentum, constants, h, FPI_iters)
 	position_new = position
