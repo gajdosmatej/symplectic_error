@@ -13,6 +13,9 @@ function getR(rho, z_dim, constants)
 end
 
 
+"""
+Calculate primitive function of f = r/(R*q).
+"""
 function getF(r, constants)
 	a, R = constants.a, constants.R
 	return 1/R * (1/(3a) * r^3 − 1/(2a^2) * r^2 + (1+a^2)/a^3 * r − (1 + a^2)/a^4 * log(a*r + 1))
@@ -20,7 +23,7 @@ end
 
 
 """
-Calculate the dimensionless vector potential from the rho, x, y and F values.
+Calculate the dimensionless vector potential from the rho, x, y and F values. Auxiliary function.
 """
 function getA(rho, F, x_dim, y_dim, constants)
 	B0, R = constants.B0, constants.R
@@ -59,11 +62,7 @@ end
 Get the dimensionless Hamiltonian value for the current dimensionless particle state.
 """
 function getH(position, momentum, constants)
-	x_dim, y_dim, z_dim = constants.L_DIM * position
-	rho = getRho(x_dim, y_dim)
-	r = getR(rho, z_dim, constants)
-	F = getF(r, constants)
-	A = getA(rho, F, x_dim, y_dim, constants)
+	A = getA(position, constants)
 	H = 1/2 * norm(momentum - A)^2
 	return H
 end
