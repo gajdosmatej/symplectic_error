@@ -26,10 +26,10 @@ include("./integration_methods.jl");
 R = 5;
 
 # ╔═╡ b58d451f-cd91-479a-b743-b3fca3da202e
-a = 0.5;
+a = 1;
 
 # ╔═╡ ed03bab4-582d-490e-b957-2cad4abf081e
-B0 = 2;
+B0 = 0.02;
 
 # ╔═╡ e3f25cc5-2f5d-4b4e-89ea-63090026da90
 m = 1.673e-27;
@@ -38,10 +38,10 @@ m = 1.673e-27;
 Q = 1.602e-19;
 
 # ╔═╡ 13dba0bc-9e10-47f9-8fb8-e0b4866ca175
-init_pos = [6., 0., 0.5];
+init_pos = [5.1, 0., 0.1];
 
 # ╔═╡ f3fdafe6-6d7a-4a54-aa99-011cbec4e090
-init_momentum = [1e-25, 1e-25, 0.];
+init_momentum = [1e-23, 1e-23, 1e-21];
 
 # ╔═╡ 68fc61b7-d6b5-494f-9773-450fced62908
 constants = Constants(R, a, B0, m, Q)
@@ -52,38 +52,26 @@ initial_conditions = InitialConditions(init_pos, init_momentum);
 # ╔═╡ 8f0c17ef-2853-449c-a996-c3be8c5eee35
 CairoMakie.activate!();
 
-# ╔═╡ 408e7b33-c89b-4117-955f-a136a65404f1
-J = [	0 0 0 1 0 0; 
-			0 0 0 0 1 0;
-			0 0 0 0 0 1;
-			-1 0 0 0 0 0;
-			0 -1 0 0 0 0;
-			0 0 -1 0 0 0
-		];
-
 # ╔═╡ 1c231e80-8779-4010-bc7a-0f005c809e18
 pos = 1/constants.L_DIM * initial_conditions.q0
 
 # ╔═╡ 16db40a0-2f07-49ce-9bdf-3935f01ec8b0
 momentum = 1/constants.P_DIM * initial_conditions.p0
 
-# ╔═╡ edcc339a-d2f1-4a7f-b7c0-2c9d1f54cf34
-begin
-	num_FPI_iters = 3;
-	for i=1:6
-		h_val = 10.0^(-i)
-		println("h = 1e-", i, " * T_0")
+# ╔═╡ 9e104d4f-8fcf-4c5d-9717-f2306c159333
+num_FPI_iters_print = 3;
 
-		J_perturbed = getPerturbedMatrix(pos, momentum, constants, h_val, num_FPI_iters)
-		J_diagonal = J_perturbed[4:6,4:6]
-		J_antidiagonal_delta = J_perturbed[1:3,4:6] - Matrix(1.0I, 3, 3)
+# ╔═╡ 75991469-3dbd-42d8-a241-ef27d5a84f6a
+h_print = 1e-1;
 
-		display(J_perturbed)
-		println("norm diagonal = ", norm(J_diagonal))
-		println("norm antidiagonal diff = ", norm(J_antidiagonal_delta))
-		println("------------------")
-	end
-end
+# ╔═╡ 448e0dc3-86e7-48be-a359-c962ef5512a0
+J_perturbed_print = getPerturbedMatrix(pos, momentum, constants, h_print, num_FPI_iters_print)
+
+# ╔═╡ 7a38562f-d080-42d8-8fd7-8a3b7f587cf6
+norm(J_perturbed_print[4:6,4:6])
+
+# ╔═╡ c5be9205-6581-467e-ac2b-1dfc9d734ca1
+norm( J_perturbed_print[1:3,4:6] - Matrix(1.0I, 3, 3) )
 
 # ╔═╡ cb0a5e9b-454b-491e-b916-dd407fc37cde
 function getOrderPlot(is_diag)
@@ -102,7 +90,7 @@ function getOrderPlot(is_diag)
 		A = []
 		b = []
 
-		hs = 10 .^(-0.25:-0.25:-3.5)
+		hs = 10 .^(-0.25:-0.25:-3)
 		@progress for h=hs
 
 			J_perturbed = getPerturbedMatrix(pos, momentum, constants, h, FPI_iters)
@@ -137,7 +125,7 @@ function getOrderPlot(is_diag)
 		@printf("%.3e", C)
 		println("")
 
-		x_vals = 10 .^(-0.1:-0.01:-3.7)
+		x_vals = 10 .^(-0.1:-0.01:-3.3)
 		y_vals = C*(x_vals .^p)
 		push!(lines_objs, lines!(x_vals, y_vals, color=color, linestyle=:dash, linewidth=2))
 		push!(slopes, p)
@@ -1774,10 +1762,13 @@ version = "4.1.0+0"
 # ╠═68fc61b7-d6b5-494f-9773-450fced62908
 # ╠═b1dde042-b6b0-4e56-ae6e-d944ab29b515
 # ╠═8f0c17ef-2853-449c-a996-c3be8c5eee35
-# ╠═408e7b33-c89b-4117-955f-a136a65404f1
 # ╠═1c231e80-8779-4010-bc7a-0f005c809e18
 # ╠═16db40a0-2f07-49ce-9bdf-3935f01ec8b0
-# ╠═edcc339a-d2f1-4a7f-b7c0-2c9d1f54cf34
+# ╠═9e104d4f-8fcf-4c5d-9717-f2306c159333
+# ╠═75991469-3dbd-42d8-a241-ef27d5a84f6a
+# ╠═448e0dc3-86e7-48be-a359-c962ef5512a0
+# ╠═7a38562f-d080-42d8-8fd7-8a3b7f587cf6
+# ╠═c5be9205-6581-467e-ac2b-1dfc9d734ca1
 # ╠═cb0a5e9b-454b-491e-b916-dd407fc37cde
 # ╠═453eac9e-596f-461c-8eb9-42f6889be69e
 # ╠═4ce6f0eb-205a-4832-a77b-8b8cf48394ba

@@ -23,22 +23,22 @@ using Printf
 include("./integration_methods.jl");
 
 # ╔═╡ 32bbc279-f94a-4d80-8fcd-6274f3a80670
-num_iter = 1000;
+num_iter = 5000;
 
 # ╔═╡ 96e6df17-a07d-4d47-ab40-313341008755
-num_iter_2 = 4000;
+num_iter_2 = 25000;
 
 # ╔═╡ e5d1e415-90b0-473d-9e42-d629287a51f7
-num_plotpoints = 1000;
+num_plotpoints = 5000;
 
 # ╔═╡ 5ceac8f7-0a74-4f24-a238-78bdb1b5e8a3
 R = 5;
 
 # ╔═╡ b58d451f-cd91-479a-b743-b3fca3da202e
-a = 0.5;
+a = 1;
 
 # ╔═╡ ed03bab4-582d-490e-b957-2cad4abf081e
-B0 = 2;
+B0 = 0.02;
 
 # ╔═╡ e3f25cc5-2f5d-4b4e-89ea-63090026da90
 m = 1.673e-27;
@@ -59,7 +59,7 @@ num_FPI_iters = 3;
 constants = Constants(R, a, B0, m, Q)
 
 # ╔═╡ b1dde042-b6b0-4e56-ae6e-d944ab29b515
-initial_conditions = InitialConditions([6., 0., 0.5], [1e-25, 1e-25, 0.]);
+initial_conditions = InitialConditions([5.1, 0., 0.1], [1e-23, 1e-23, 1e-21]);
 
 # ╔═╡ c5485524-8f45-4b11-95cb-3e7ebba30c34
 begin
@@ -86,8 +86,8 @@ begin
 		ax.zlabel = "z [m]"
 	end
 
-	ax1.title = "Total integration time = " * string( round(Float64(h*constants.T_DIM*num_iter*1e9), digits=1) ) * " ns"
-	ax2.title = "Total integration time = " * string( round(Float64(h*constants.T_DIM*num_iter_2*1e9), digits=1) ) * " ns"
+	ax1.title = "Total integration time = " * string( round(Float64(h*constants.T_DIM*num_iter*1e6), digits=1) ) * " μs"
+	ax2.title = "Total integration time = " * string( round(Float64(h*constants.T_DIM*num_iter_2*1e6), digits=1) ) * " μs"
 	fig[0,:] = Label(fig, "q-implicit Symplectic Euler, particle in tokamak field", fontsize=24)
 	fig
 	#save("trajectory.pdf", fig)

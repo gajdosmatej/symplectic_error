@@ -26,10 +26,10 @@ include("./integration_methods.jl");
 R = 5;
 
 # ╔═╡ b58d451f-cd91-479a-b743-b3fca3da202e
-a = 0.5;
+a = 1;
 
 # ╔═╡ ed03bab4-582d-490e-b957-2cad4abf081e
-B0 = 2;
+B0 = 0.02;
 
 # ╔═╡ e3f25cc5-2f5d-4b4e-89ea-63090026da90
 m = 1.673e-27;
@@ -41,7 +41,7 @@ Q = 1.602e-19;
 h = 0.25;
 
 # ╔═╡ 1e2d0f11-a1b1-4e32-8af8-d14bdcd0d59d
-num_iter = 1000000;
+num_iter = 3000000;
 
 # ╔═╡ c07b7c24-a5af-4c6a-9397-4ecfd4c49b4a
 num_plotpoints = 500;
@@ -50,28 +50,28 @@ num_plotpoints = 500;
 constants = Constants(R, a, B0, m, Q)
 
 # ╔═╡ b1dde042-b6b0-4e56-ae6e-d944ab29b515
-initial_conditions = InitialConditions([6., 0., 0.5], [1e-25, 1e-25, 0.]);
+initial_conditions = InitialConditions([5.1, 0., 0.1], [1e-23, 1e-23, 1e-21]);
 
 # ╔═╡ 3b44f89c-c692-40fb-8dd2-d4ffdec70971
 CairoMakie.activate!();
 
 # ╔═╡ eb3c2e92-a2b5-4188-9d8d-6c7af9c6c9f2
-convertToGeV = (E -> E / (1.602e-19 * 1e9));
+convertTokeV = (E -> E / (1.602e-19 * 1e3));
 
 # ╔═╡ 82dc904a-d433-43b0-aea0-37bc078aa2d5
-Hs_quasiexplicit = map(convertToGeV, integrateReturnHamiltonian(constants, initial_conditions, h, num_iter, num_plotpoints, false) );
+Hs_quasiexplicit = map(convertTokeV, integrateReturnHamiltonian(constants, initial_conditions, h, num_iter, num_plotpoints, false) );
 
 # ╔═╡ 3cb15991-77f4-4e34-b82a-31f24ab1401f
-Hs_implicit_2 = map(convertToGeV, integrateReturnHamiltonian(constants, initial_conditions, h, num_iter, num_plotpoints, true, 2) );
+Hs_implicit_2 = map(convertTokeV, integrateReturnHamiltonian(constants, initial_conditions, h, num_iter, num_plotpoints, true, 2) );
 
 # ╔═╡ d6a6240e-c0e5-4cea-bee2-5e22d13aa68d
-Hs_implicit_3 = map(convertToGeV, integrateReturnHamiltonian(constants, initial_conditions, h, num_iter, num_plotpoints, true, 3) );
+Hs_implicit_3 = map(convertTokeV, integrateReturnHamiltonian(constants, initial_conditions, h, num_iter, num_plotpoints, true, 3) );
 
 # ╔═╡ 323a80ed-a435-4ada-a41a-dfae08a30636
 t_step = div(num_iter, length(Hs_quasiexplicit))
 
 # ╔═╡ 56fea056-e663-45c8-ae27-c27a969aa208
-ts = map(n_ -> h*(n_ - 1), 1:num_plotpoints)
+ts = map(n_ -> t_step*h*(n_ - 1), 1:num_plotpoints)
 
 # ╔═╡ e69d6bff-779d-4f49-8d09-1f0258a7df99
 begin
@@ -83,7 +83,7 @@ begin
 	lines_2 = lines!(ax, ts, Hs_implicit_2, color="mediumorchid4")
 
 	ax.xlabel = L"$t$ [$T_0$]"
-	ax.ylabel = L"$H$ [GeV]"
+	ax.ylabel = L"$H$ [keV]"
 
 	Legend(fig[3,2], [lines_expl, lines_2, lines_3], [L"$p$-implicit (linearly)", L"$q$-implicit with 2 FPI steps", L"$q$-implicit with 3 FPI steps"])
 	ax.title = "Energy drift for both Symplectic Euler schemes"
