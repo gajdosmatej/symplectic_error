@@ -88,9 +88,9 @@ begin
 
 	ax1.title = "Total integration time = " * string( round(Float64(h*constants.T_DIM*num_iter*1e6), digits=1) ) * " μs"
 	ax2.title = "Total integration time = " * string( round(Float64(h*constants.T_DIM*num_iter_2*1e6), digits=1) ) * " μs"
-	fig[0,:] = Label(fig, "q-implicit Symplectic Euler, particle in tokamak field", fontsize=24)
+	fig[0,:] = Label(fig, L"$q$-implicit Symplectic Euler, particle in tokamak field", fontsize=24)
 	fig
-	#save("trajectory.pdf", fig)
+	#save("trajectory.eps", fig)
 end
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
